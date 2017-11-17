@@ -1,0 +1,150 @@
+
+<link rel="import" href="../polymer/polymer-element.html">
+
+<dom-module id="jd-file-downloader">
+  <template>
+    <style include="shared-styles">
+       :host {
+        display: block;
+      }
+    </style>
+    <div id="container"></div>
+  </template>
+
+  <script>
+    /**
+     * `jdfile-downloader`
+     * File downloader element
+     *
+     * @customElement
+     * @polymer
+     * @demo demo/index.html
+     */
+    class JDFileDownloader extends Polymer.Element {
+      static get is() { return 'jd-file-downloader'; }
+
+      static get properties() {
+        return {
+          method: String, // e.g. 'POST'
+          action: String,
+          data: Array     // [ { name: 'field1 , value: 'field1-Value' } , { name: 'field2 , value: 'field2-Value' } ]
+        };
+      }
+
+
+      /**
+       * Use for one-time configuration of your component after local DOM is initialized. 
+       */
+      ready() {
+        super.ready();
+
+        // When possible, use afterNextRender to defer non-critical
+        // work until after first paint.
+        Polymer.RenderStatus.afterNextRender(this, function () {
+          //this._createIFrame();
+        });
+
+      }
+
+      /**
+       * Creates form to submit downloading request.
+       */
+      _createForm() {
+        let form = document.createElement("form");
+        form.setAttribute('method', this.method);
+        form.setAttribute('action', this.action);
+
+        this._createFormElements(form);
+
+        return form;
+      }
+
+      _createFormElements(form) {
+        this._createHiddenElements(form);
+        this._createSubmitButton(form);
+      }
+
+      /**
+      * Creates hidden input elements which contains data.
+      */
+      _createHiddenElements(form) {
+
+        for (let i in this.data) {
+          let inputElement = document.createElement("input"); //input element, text
+          inputElement.setAttribute('type', "hidden");
+          inputElement.setAttribute('name', this.data[i].name);
+          inputElement.setAttribute('value', this.data[i].value);
+          form.appendChild(inputElement);
+        }
+      }
+
+      /**
+      * Creates submit button for downloading request.
+      */
+      _createSubmitButton(form) {
+
+        let submitButton = document.createElement("input");
+        submitButton.setAttribute('type', "submit");
+        submitButton.setAttribute('value', "Submit");
+        form.appendChild(submitButton);
+      }
+
+      /**
+      * Frame to contain form & submit request to allow page reload.
+      */
+      _createIFrame() {
+        this._removeIframe();
+        let iframe = document.createElement('iframe');
+        let html = '<body></body>';
+        if (this.browser_isIE()) {
+          iframe.src = "javascript:'<script>window.onload=function(){document.write(\\'<script>document.domain=\\\"" + document.domain + "\\\";<\\\\/script>\\');document.close();};<\/script>'";
+        }
+        else {
+          iframe.src = 'data:text/html;charset=utf-8,' + encodeURI(html);
+        }
+        iframe.style.display = "none";
+        this.$.container.appendChild(iframe);
+        return iframe;
+      }
+
+      downloadFile() {
+        var iframe = this._createIFrame();
+        var form = this._createForm();
+        if (this.browser_isIE()) {
+          var body = document.createElement('body');
+          body.appendChild(form);
+          iframe.contentDocument.appendChild(body);
+        }
+        else {
+          iframe.contentDocument.querySelector("body").appendChild(form);
+        }
+        form.submit();
+      }
+      _removeIframe() {
+
+        let iframes = this.$.container.querySelectorAll('iframe');
+        for (let i = 0; i < iframes.length; i++) {
+          iframes[i].parentNode.removeChild(iframes[i]);
+        }
+      }
+      _onSubmitFile() {
+        this._downloadFile();
+      }
+
+      browser_isIE() {
+        var ua = window.navigator.userAgent;
+        var msie = ua.indexOf("MSIE ");
+
+        if (msie > 0 || (!!document.documentMode == true)) // If Internet Explorer, return version number
+        {
+          return true;
+        }
+        else {
+          return false;
+        }
+      }
+    }
+
+    window.customElements.define(JDFileDownloader.is, JDFileDownloader);
+  </script>
+</dom-module>
